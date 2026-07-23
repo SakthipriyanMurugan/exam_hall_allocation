@@ -1,0 +1,260 @@
+/* Custom Styling for Exam Hall Allocation System */
+:root {
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
+    --bg-dark: #0f172a;
+    --card-bg: #ffffff;
+    --sidebar-bg: #1e293b;
+    --sidebar-color: #cbd5e1;
+    --sidebar-active: #3b82f6;
+    --text-main: #334155;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+}
+
+body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #f8fafc;
+    color: var(--text-main);
+    overflow-x: hidden;
+}
+
+/* Sidebar Styling */
+#sidebar {
+    min-width: 250px;
+    max-width: 250px;
+    background: var(--sidebar-bg);
+    color: var(--sidebar-color);
+    transition: all 0.3s;
+    min-height: 100vh;
+    box-shadow: 4px 0 10px rgba(0,0,0,0.05);
+}
+
+#sidebar .sidebar-header {
+    padding: 20px;
+    background: #0f172a;
+    border-bottom: 1px solid #334155;
+}
+
+#sidebar ul.components {
+    padding: 15px 0;
+}
+
+#sidebar ul li a {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    color: var(--sidebar-color);
+    text-decoration: none;
+    transition: 0.2s;
+}
+
+#sidebar ul li a i {
+    margin-right: 12px;
+    font-size: 1.1rem;
+    width: 20px;
+    text-align: center;
+}
+
+#sidebar ul li a:hover, #sidebar ul li.active > a {
+    color: #ffffff;
+    background: rgba(59, 130, 246, 0.15);
+    border-left: 4px solid var(--sidebar-active);
+}
+
+/* Main Content Area */
+#content {
+    width: 100%;
+    min-height: 100vh;
+    transition: all 0.3s;
+}
+
+.navbar {
+    padding: 15px 25px;
+    background: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Card Metrics */
+.card-kpi {
+    border: none;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card-kpi:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.06);
+}
+
+.kpi-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+}
+
+/* Bench Seating Grid Layout */
+.bench-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+}
+
+@media (max-width: 768px) {
+    .bench-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.bench-card {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+}
+
+.bench-header {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #475569;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.bench-seats {
+    display: flex;
+    gap: 6px;
+}
+
+.seat-box {
+    flex: 1;
+    background: #f8fafc;
+    border: 1px dashed #cbd5e1;
+    border-radius: 8px;
+    padding: 6px 3px;
+    text-align: center;
+    font-size: 0.75rem;
+    min-height: 58px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.seat-box.occupied {
+    border-style: solid;
+    background: #eff6ff;
+    border-color: #93c5fd;
+}
+
+.seat-box .seat-no {
+    font-size: 0.65rem;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.seat-box .reg-no {
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.dept-badge {
+    font-size: 0.6rem;
+    padding: 1px 5px;
+    border-radius: 4px;
+    margin-top: 2px;
+    display: inline-block;
+}
+
+/* Printable styles: One Hall Layout Per Single Sheet in LANDSCAPE Mode (3 Columns x 5 Rows) */
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 6mm;
+    }
+    html, body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+    #sidebar, .navbar, .no-print, nav {
+        display: none !important;
+    }
+    #content {
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+    }
+    .page-break {
+        page-break-before: always !important;
+        page-break-after: always !important;
+        break-before: page !important;
+        break-after: page !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        height: 192mm !important;
+        max-height: 192mm !important;
+        overflow: hidden !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+        margin-bottom: 0 !important;
+        padding: 8px 12px !important;
+    }
+    .page-break:first-of-type {
+        page-break-before: avoid !important;
+        break-before: avoid !important;
+    }
+    .bench-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, 1fr) !important;
+        gap: 6px !important;
+        margin-top: 6px !important;
+    }
+    .bench-card {
+        padding: 4px 6px !important;
+        border: 1px solid #64748b !important;
+        border-radius: 5px !important;
+    }
+    .bench-header {
+        font-size: 0.72rem !important;
+        margin-bottom: 3px !important;
+        padding-bottom: 2px !important;
+    }
+    .seat-box {
+        min-height: 28px !important;
+        padding: 2px 1px !important;
+        border-radius: 4px !important;
+    }
+    .seat-box .seat-no {
+        font-size: 0.55rem !important;
+    }
+    .seat-box .reg-no {
+        font-size: 0.72rem !important;
+    }
+    .seat-box .dept-badge {
+        font-size: 0.52rem !important;
+        padding: 0 3px !important;
+    }
+}
+
+/* Mobile responsive fixes */
+@media (max-width: 991px) {
+    #sidebar {
+        margin-left: -250px;
+    }
+    #sidebar.active {
+        margin-left: 0;
+    }
+}

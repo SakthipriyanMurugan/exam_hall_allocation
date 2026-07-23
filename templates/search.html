@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Search Student Seat - Exam System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="text-center mb-4">
+            <h3 class="fw-bold text-dark mb-1">Student Seat Search</h3>
+            <p class="text-muted">Instant lookup by Register Number or Student Name</p>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+            <div class="card-body p-4">
+                <form action="{{ url_for('search_view') }}" method="GET" class="d-flex gap-2">
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                        <input type="text" name="q" class="form-control bg-light border-start-0 fs-6" placeholder="Enter RegNo (e.g. 1001) or Name..." value="{{ query }}" required autofocus>
+                    </div>
+                    <button type="submit" class="btn btn-primary px-4 fw-bold">Search</button>
+                </form>
+            </div>
+        </div>
+
+        {% if query %}
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+            <div class="card-header bg-white border-0 pt-3 px-4">
+                <h6 class="fw-bold mb-0">Search Results for "{{ query }}" ({{ results|length }})</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for res in results %}
+                    <div class="list-group-item p-4">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h5 class="fw-bold text-primary mb-1">{{ res.student_name }}</h5>
+                                <span class="badge bg-secondary">Reg No: {{ res.reg_no }}</span>
+                                <span class="badge bg-outline-primary border text-primary">{{ res.dept_code }}</span>
+                            </div>
+                            <span class="badge bg-success px-3 py-2 fs-7"><i class="fa-solid fa-door-open me-1"></i>{{ res.hall_name }}</span>
+                        </div>
+                        <div class="row g-2 text-center mt-3 bg-light p-3 rounded-3 border">
+                            <div class="col-4">
+                                <small class="text-muted text-uppercase d-block fw-bold fs-8">Bench Row</small>
+                                <span class="fw-bold text-dark fs-6">Row {{ res.bench_row }}</span>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted text-uppercase d-block fw-bold fs-8">Bench Column</small>
+                                <span class="fw-bold text-dark fs-6">Column {{ res.bench_col }}</span>
+                            </div>
+                            <div class="col-4">
+                                <small class="text-muted text-uppercase d-block fw-bold fs-8">Seat Position</small>
+                                <span class="fw-bold text-primary fs-6">Seat {{ res.seat_position }}</span>
+                            </div>
+                        </div>
+                        <div class="mt-2 text-muted small">
+                            <i class="fa-solid fa-book me-1"></i> <strong>Subject:</strong> {{ res.subject_code or 'General Exam' }} - {{ res.subject_name or '' }}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="fa-solid fa-face-frown fs-2 text-warning mb-2 d-block"></i>
+                        No allocated student record found matching "{{ query }}".
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

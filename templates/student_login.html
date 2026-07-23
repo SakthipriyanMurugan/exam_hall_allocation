@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Student Login - Exam System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-md-5 col-lg-4">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-header bg-success text-white text-center py-4 border-0">
+                <i class="fa-solid fa-graduation-cap fs-1 mb-2"></i>
+                <h4 class="fw-bold mb-0">Student Portal Login</h4>
+                <small class="text-white-50">View Exam Seating Allocation</small>
+            </div>
+            <div class="card-body p-4">
+                <form action="{{ url_for('student_login') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="reg_no" class="form-label fw-bold text-secondary">Register Number</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-id-card text-muted"></i></span>
+                            <input type="text" class="form-control bg-light border-start-0" id="reg_no" name="reg_no" required placeholder="e.g. 1001">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="name" class="form-label fw-bold text-secondary">Student Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
+                            <input type="text" class="form-control bg-light border-start-0" id="name" name="name" required placeholder="e.g. Arun">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-success w-100 py-2 fw-bold rounded-3 shadow-sm">
+                        <i class="fa-solid fa-magnifying-glass me-2"></i> View My Allocation
+                    </button>
+                </form>
+            </div>
+            <div class="card-footer bg-light text-center py-3 border-0">
+                <a href="{{ url_for('login') }}" class="text-decoration-none text-muted small fw-bold">
+                    <i class="fa-solid fa-user-shield me-1"></i> Admin Login
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

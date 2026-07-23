@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Login - Exam System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-md-5 col-lg-4">
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-header bg-primary text-white text-center py-4 border-0">
+                <i class="fa-solid fa-user-shield fs-1 mb-2"></i>
+                <h4 class="fw-bold mb-0">Admin Authentication</h4>
+                <small class="text-white-50">Exam Hall Allocation System</small>
+            </div>
+            <div class="card-body p-4">
+                <form action="{{ url_for('login') }}" method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label fw-bold text-secondary">Username / ID</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-user text-muted"></i></span>
+                            <input type="text" class="form-control bg-light border-start-0" id="username" name="username" value="sakthi" required placeholder="Enter Admin ID">
+                        </div>
+                        <small class="form-text text-muted">Default ID: <code>sakthi</code></small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-bold text-secondary">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-lock text-muted"></i></span>
+                            <input type="password" class="form-control bg-light border-start-0" id="password" name="password" value="sakthi2007" required placeholder="Enter Password">
+                        </div>
+                        <small class="form-text text-muted">Default Password: <code>sakthi2007</code></small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-3 shadow-sm">
+                        <i class="fa-solid fa-right-to-bracket me-2"></i> Login to Dashboard
+                    </button>
+                </form>
+            </div>
+            <div class="card-footer bg-light text-center py-3 border-0">
+                <a href="{{ url_for('student_login') }}" class="text-decoration-none text-muted small fw-bold">
+                    <i class="fa-solid fa-user-graduate me-1"></i> Are you a Student? Click here to check seating
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

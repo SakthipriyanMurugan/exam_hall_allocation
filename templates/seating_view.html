@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Visual Seating Grid - Exam System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 no-print">
+    <div>
+        <h3 class="fw-bold mb-1 text-dark">Visual Seating Grid</h3>
+        <p class="text-muted mb-0">Hall seating arrangement displayed by Column 1 (C1), Column 2 (C2), and Column 3 (C3)</p>
+    </div>
+    <div class="d-flex gap-2">
+        <select class="form-select" id="hallSelector" style="width: 220px;" onchange="location.href='?hall_id=' + this.value;">
+            <option value="">-- All Halls --</option>
+            {% for h in halls %}
+            <option value="{{ h.id }}" {% if selected_hall_id|int == h.id %}selected{% endif %}>{{ h.hall_name }}</option>
+            {% endfor %}
+        </select>
+        <button class="btn btn-primary" onclick="window.print();">
+            <i class="fa-solid fa-print me-1"></i> Print Layout
+        </button>
+    </div>
+</div>
+
+{% for h in display_halls %}
+<div class="card border-0 shadow-sm rounded-4 mb-4 page-break">
+    <div class="card-header bg-white border-0 pt-3 px-4 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-door-open me-2 text-primary"></i>{{ h.hall_name }}</h5>
+        <span class="badge bg-secondary">Capacity: {{ h.total_capacity }} Seats ({{ h.rows }} Rows x {{ h.cols }} Cols)</span>
+    </div>
+    <div class="card-body p-4">
+        <!-- Front Blackboard Indicator -->
+        <div class="bg-dark text-white text-center py-2 rounded-3 mb-4 fw-bold text-uppercase fs-8 letter-spacing-2">
+            <i class="fa-solid fa-chalkboard me-2"></i> FRONT BLACKBOARD / STAGE
+        </div>
+
+        <!-- Column Headers (C1, C2, C3) -->
+        <div class="row text-center mb-3 fw-bold">
+            <div class="col-4">
+                <div class="p-2 bg-primary text-white rounded-3 shadow-sm">
+                    <i class="fa-solid fa-table-columns me-1"></i> COLUMN 1 (C1)
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="p-2 bg-success text-white rounded-3 shadow-sm">
+                    <i class="fa-solid fa-table-columns me-1"></i> COLUMN 2 (C2)
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="p-2 bg-info text-white rounded-3 shadow-sm">
+                    <i class="fa-solid fa-table-columns me-1"></i> COLUMN 3 (C3)
+                </div>
+            </div>
+        </div>
+
+        <!-- 3-Column Bench Grid (Row by Row placing C1, C2, C3 side by side) -->
+        <div class="bench-grid">
+            {% for row in range(1, h.rows + 1) %}
+                {% for col in range(1, h.cols + 1) %}
+                {% set bench_seats = hall_bench_map.get((h.id, row, col), []) %}
+                <div class="bench-card">
+                    <div class="bench-header">
+                        <span class="fw-bold">R{{ row }}C{{ col }}</span>
+                        <span class="badge bg-light text-muted border">
+                            {% if bench_seats %}{{ bench_seats|length }}/{{ h.capacity_per_bench }}{% else %}EMPTY{% endif %}
+                        </span>
+                    </div>
+                    <div class="bench-seats">
+                        {% for seat_num in range(1, h.capacity_per_bench + 1) %}
+                        {% set st = bench_seats|selectattr('seat_position', 'equalto', seat_num)|first %}
+                        <div class="seat-box {% if st %}occupied{% endif %}">
+                            <span class="seat-no">S{{ seat_num }}</span>
+                            {% if st %}
+                            <span class="reg-no">{{ st.reg_no }}</span>
+                            <span class="dept-badge bg-primary text-white">{{ st.dept_code or 'GEN' }}</span>
+                            {% if st.subject_code %}
+                            <small class="text-muted d-block" style="font-size: 0.6rem;">{{ st.subject_code }}</small>
+                            {% endif %}
+                            {% else %}
+                            <span class="text-muted small">-</span>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="text-center py-5">
+    <i class="fa-solid fa-table-cells text-muted fs-1 mb-3"></i>
+    <h5 class="fw-bold">No Seating Data to Display</h5>
+    <p class="text-muted">Run the allocation engine to visualize the bench layout.</p>
+</div>
+{% endfor %}
+{% endblock %}

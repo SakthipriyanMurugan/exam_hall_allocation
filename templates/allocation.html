@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Seating Allocation Engine - Exam System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1 text-dark">Automated Seating Allocation Engine</h3>
+        <p class="text-muted mb-0">Set exam department/subject mappings and execute dynamic seating allocation</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary shadow-sm" data-bs-toggle="modal" data-bs-target="#smtpModal">
+            <i class="fa-solid fa-gear me-1"></i> Email Settings
+        </button>
+        <form action="{{ url_for('clear_allocation_route') }}" method="POST" onsubmit="return confirm('Clear all current allocations?');">
+            <button type="submit" class="btn btn-outline-danger shadow-sm">
+                <i class="fa-solid fa-rotate-left me-1"></i> Clear Allocations
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- STEP 1: Interactive Exam Subject Mapping Configurator -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-header bg-white border-0 pt-3 px-4 d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-primary">
+            <i class="fa-solid fa-sliders me-2"></i>1. Select Department, Year, Semester & Exam Subject
+        </h5>
+        {% if session_mappings %}
+        <form action="{{ url_for('clear_mappings_route') }}" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-sm btn-outline-danger border-0">Clear Session Mappings</button>
+        </form>
+        {% endif %}
+    </div>
+    <div class="card-body px-4 pb-4">
+        <form action="{{ url_for('add_mapping_route') }}" method="POST" class="row g-3 align-items-end mb-4 bg-light p-3 rounded-3 border">
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-secondary">1. Select Department</label>
+                <select name="dept_id" class="form-select" id="deptSelect" required>
+                    <option value="">-- Choose Dept --</option>
+                    {% for d in departments %}
+                    <option value="{{ d.id }}">{{ d.name }} ({{ d.code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold small text-secondary">2. Select Year</label>
+                <select name="year" class="form-select" required>
+                    {% for y in range(1, 5) %}
+                    <option value="{{ y }}" {% if y == 3 %}selected{% endif %}>Year {{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-bold small text-secondary">3. Select Semester</label>
+                <select name="semester" class="form-select" required>
+                    {% for s in range(1, 9) %}
+                    <option value="{{ s }}" {% if s == 5 %}selected{% endif %}>Sem {{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-bold small text-secondary">4. Select Exam Subject</label>
+                <select name="subject_id" class="form-select" required>
+                    <option value="">-- Choose Subject --</option>
+                    {% for sub in subjects %}
+                    <option value="{{ sub.id }}">{{ sub.subject_code }} - {{ sub.subject_name }} ({{ sub.dept_code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100 fw-bold">
+                    <i class="fa-solid fa-plus me-1"></i> Set Subject
+                </button>
+            </div>
+        </form>
+
+        <!-- Active Exam Mappings List -->
+        {% if session_mappings %}
+        <div class="table-responsive mb-3 border rounded-3 overflow-hidden">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Department</th>
+                        <th>Year / Sem</th>
+                        <th>Mapped Subject Code</th>
+                        <th>Subject Name</th>
+                        <th class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for m in session_mappings %}
+                    <tr>
+                        <td class="fw-bold"><span class="badge bg-primary me-2">{{ m.dept_code }}</span> {{ m.dept_name }}</td>
+                        <td>Year {{ m.year }}, Semester {{ m.semester }}</td>
+                        <td class="fw-bold text-success">{{ m.subject_code }}</td>
+                        <td>{{ m.subject_name }}</td>
+                        <td class="text-end">
+                            <form action="{{ url_for('remove_mapping_route', idx=loop.index0) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="fa-solid fa-xmark"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info py-2 mb-3 small">
+            <i class="fa-solid fa-info-circle me-1"></i> No custom exam subject mappings added yet. If you run allocation now, default subjects across all departments will be used automatically.
+        </div>
+        {% endif %}
+
+        <!-- STEP 2: Execute Allocation -->
+        <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+            <span class="text-muted small">
+                <i class="fa-solid fa-shield-halved me-1 text-success"></i> Seating Rules: Single-dept auto-spacing (2 seats/bench) & multi-dept mixing enabled.
+            </span>
+            <form action="{{ url_for('run_allocation_route') }}" method="POST">
+                <button type="submit" class="btn btn-primary btn-lg shadow-sm px-5 fw-bold">
+                    <i class="fa-solid fa-play me-2"></i> Confirm & Run Allocation Now
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Email Trigger Banner -->
+<div class="card border-0 shadow-sm rounded-4 mb-4 bg-gradient bg-primary text-white p-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h5 class="fw-bold mb-1"><i class="fa-solid fa-paper-plane me-2"></i>Send Email Notifications to Students</h5>
+            <p class="mb-0 text-white-50">Dispatch personalized hall, bench coordinate, seat, and subject details from <strong>{{ settings.get('sender_email', 'sakthipriyan1212@gmail.com') }}</strong></p>
+        </div>
+        <div>
+            <form action="{{ url_for('send_emails_route') }}" method="POST">
+                <button type="submit" class="btn btn-light text-primary fw-bold px-4 shadow-sm" {% if not allocations %}disabled{% endif %}>
+                    <i class="fa-solid fa-envelope-open-text me-2"></i> Send Student Emails
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Allocation Summary Records -->
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header bg-white border-0 pt-3 px-4 d-flex justify-content-between align-items-center">
+        <h6 class="fw-bold mb-0"><i class="fa-solid fa-list-check me-2 text-primary"></i>Current Allocation Summary Records ({{ allocations|length }})</h6>
+        <input type="text" class="form-control form-control-sm table-search" style="width: 250px;" data-table="allocTable" placeholder="Filter allocation table...">
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="allocTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Hall Name</th>
+                        <th>Bench Coordinate</th>
+                        <th>Seat Pos</th>
+                        <th>Reg No</th>
+                        <th>Student Name</th>
+                        <th>Department</th>
+                        <th>Subject Code</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in allocations %}
+                    <tr>
+                        <td class="fw-bold text-primary">{{ a.hall_name }}</td>
+                        <td>Row {{ a.bench_row }}, Column {{ a.bench_col }}</td>
+                        <td><span class="badge bg-dark">Seat {{ a.seat_position }}</span></td>
+                        <td class="fw-bold">{{ a.reg_no }}</td>
+                        <td>{{ a.student_name }}</td>
+                        <td><span class="badge bg-secondary">{{ a.dept_code }}</span></td>
+                        <td>{{ a.subject_code or 'N/A' }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-circle-exclamation fs-2 text-warning mb-2 d-block"></i>
+                            No allocations generated yet. Add subject mappings above and click <strong>"Confirm & Run Allocation Now"</strong>.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- SMTP Settings Modal -->
+<div class="modal fade" id="smtpModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('save_settings_route') }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-envelope-open-text text-primary me-2"></i>Email Sender Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Sender Email Address</label>
+                        <input type="email" name="sender_email" class="form-control" value="{{ settings.get('sender_email', 'sakthipriyan1212@gmail.com') }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">SMTP Host</label>
+                        <input type="text" name="smtp_server" class="form-control" value="{{ settings.get('smtp_server', 'smtp.gmail.com') }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">SMTP Port</label>
+                        <input type="number" name="smtp_port" class="form-control" value="{{ settings.get('smtp_port', '587') }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Google App Password (Optional for Live Sending)</label>
+                        <input type="password" name="smtp_password" class="form-control" value="{{ settings.get('smtp_password', '') }}" placeholder="Enter 16-character App Password">
+                        <small class="text-muted">Required only if sending real SMTP emails via Gmail.</small>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" name="simulation_mode" id="simSwitch" {% if settings.get('simulation_mode', 'true') == 'true' %}checked{% endif %}>
+                        <label class="form-check-label fw-bold" for="simSwitch">Simulation Mode (Log Mode without requiring real SMTP credentials)</label>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Settings</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

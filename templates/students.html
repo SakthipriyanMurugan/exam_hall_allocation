@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}Student Management - Exam System{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h3 class="fw-bold mb-1 text-dark">Student Management</h3>
+        <p class="text-muted mb-0">Manage student records, mark absent, import/export Excel files, and bulk delete</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <form action="{{ url_for('delete_all_students_route') }}" method="POST" class="d-inline" onsubmit="return confirm('WARNING: Are you sure you want to delete ALL students and allocations? This action cannot be undone!');">
+            <button type="submit" class="btn btn-outline-danger shadow-sm">
+                <i class="fa-solid fa-trash-can me-1"></i> Delete All Students
+            </button>
+        </form>
+        <button class="btn btn-outline-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#importModal">
+            <i class="fa-solid fa-file-excel me-1"></i> Bulk Excel Import
+        </button>
+        <a href="{{ url_for('export_students') }}" class="btn btn-outline-success shadow-sm">
+            <i class="fa-solid fa-download me-1"></i> Export to Excel
+        </a>
+        <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+            <i class="fa-solid fa-plus me-1"></i> Add Student
+        </button>
+    </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+    <div class="card-body p-3">
+        <form action="{{ url_for('students_view') }}" method="GET" class="row g-3">
+            <div class="col-md-3">
+                <input type="text" name="search" class="form-control" placeholder="Search RegNo or Name..." value="{{ req_args.get('search', '') }}">
+            </div>
+            <div class="col-md-3">
+                <select name="dept_id" class="form-select">
+                    <option value="">-- All Departments --</option>
+                    {% for d in departments %}
+                    <option value="{{ d.id }}" {% if req_args.get('dept_id')|int == d.id %}selected{% endif %}>{{ d.name }} ({{ d.code }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="year" class="form-select">
+                    <option value="">-- All Years --</option>
+                    {% for y in range(1, 5) %}
+                    <option value="{{ y }}" {% if req_args.get('year')|int == y %}selected{% endif %}>Year {{ y }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="semester" class="form-select">
+                    <option value="">-- All Semesters --</option>
+                    {% for s in range(1, 9) %}
+                    <option value="{{ s }}" {% if req_args.get('semester')|int == s %}selected{% endif %}>Sem {{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-filter me-1"></i> Filter</button>
+                <a href="{{ url_for('students_view') }}" class="btn btn-light border"><i class="fa-solid fa-rotate-right"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Student Table with Bulk Selection -->
+<form action="{{ url_for('delete_multiple_students_route') }}" method="POST" id="bulkDeleteForm" onsubmit="return confirm('Delete selected students?');">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+        <div class="card-header bg-white border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+            <h6 class="fw-bold mb-0 text-dark">
+                <i class="fa-solid fa-users me-2 text-primary"></i>Student Records ({{ students|length }})
+            </h6>
+            <button type="submit" class="btn btn-danger btn-sm shadow-sm" id="btnDeleteSelected">
+                <i class="fa-solid fa-trash me-1"></i> Delete Selected Students
+            </button>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" id="studentsTable">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4" style="width: 40px;">
+                                <input type="checkbox" class="form-check-input" id="selectAllChk">
+                            </th>
+                            <th>Reg No</th>
+                            <th>Student Name</th>
+                            <th>Department</th>
+                            <th>Year / Sem</th>
+                            <th>Email ID</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                        <tr class="{% if s.is_absent %}table-danger-subtle{% endif %}">
+                            <td class="ps-4">
+                                <input type="checkbox" name="student_ids" value="{{ s.id }}" class="form-check-input student-chk">
+                            </td>
+                            <td class="fw-bold">{{ s.reg_no }}</td>
+                            <td>{{ s.name }}</td>
+                            <td><span class="badge bg-secondary">{{ s.dept_code or 'N/A' }}</span></td>
+                            <td>Yr {{ s.year }}, Sem {{ s.semester }}</td>
+                            <td><small class="text-muted">{{ s.email }}</small></td>
+                            <td>
+                                {% if s.is_absent %}
+                                <span class="badge bg-danger"><i class="fa-solid fa-user-xmark me-1"></i>Absent</span>
+                                {% else %}
+                                <span class="badge bg-success"><i class="fa-solid fa-user-check me-1"></i>Present</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <form action="{{ url_for('toggle_absent_route', student_id=s.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm {% if s.is_absent %}btn-outline-success{% else %}btn-outline-warning{% endif %} me-1">
+                                        {% if s.is_absent %}Mark Present{% else %}Mark Absent{% endif %}
+                                    </button>
+                                </form>
+                                <button type="button" class="btn btn-sm btn-outline-primary me-1" data-bs-toggle="modal" data-bs-target="#editModal{{ s.id }}">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <form action="{{ url_for('delete_student_route', student_id=s.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Delete this student?');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+
+                        <!-- Edit Student Modal -->
+                        <div class="modal fade" id="editModal{{ s.id }}" tabindex="-1">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form action="{{ url_for('edit_student_route', student_id=s.id) }}" method="POST">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title fw-bold">Edit Student Record</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Register Number</label>
+                                                <input type="text" name="reg_no" class="form-control" value="{{ s.reg_no }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Student Name</label>
+                                                <input type="text" name="name" class="form-control" value="{{ s.name }}" required>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Department</label>
+                                                <select name="dept_id" class="form-select" required>
+                                                    {% for d in departments %}
+                                                    <option value="{{ d.id }}" {% if d.id == s.dept_id %}selected{% endif %}>{{ d.name }} ({{ d.code }})</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            <div class="row">
+                                                <div class="col-6 mb-3">
+                                                    <label class="form-label fw-bold">Year</label>
+                                                    <input type="number" name="year" class="form-control" value="{{ s.year }}" min="1" max="4" required>
+                                                </div>
+                                                <div class="col-6 mb-3">
+                                                    <label class="form-label fw-bold">Semester</label>
+                                                    <input type="number" name="semester" class="form-control" value="{{ s.semester }}" min="1" max="8" required>
+                                                </div>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-bold">Email Address</label>
+                                                <input type="email" name="email" class="form-control" value="{{ s.email }}" required>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Save Changes</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4 text-muted">No student records found. Add or import students.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('add_student_route') }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-plus text-primary me-2"></i>Add Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Register Number</label>
+                        <input type="text" name="reg_no" class="form-control" placeholder="e.g. 1001" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Student Name</label>
+                        <input type="text" name="name" class="form-control" placeholder="e.g. Arun" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Department</label>
+                        <select name="dept_id" class="form-select" required>
+                            {% for d in departments %}
+                            <option value="{{ d.id }}">{{ d.name }} ({{ d.code }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">Year</label>
+                            <input type="number" name="year" class="form-control" value="3" min="1" max="4" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label fw-bold">Semester</label>
+                            <input type="number" name="semester" class="form-control" value="5" min="1" max="8" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email Address</label>
+                        <input type="email" name="email" class="form-control" placeholder="student@gmail.com" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Import Modal -->
+<div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ url_for('import_students_route') }}" method="POST" enctype="multipart/form-data">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-excel text-success me-2"></i>Bulk Import Excel</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-muted small">Upload an Excel (.xlsx) or CSV file with the following column headers:</p>
+                    <div class="bg-light p-2 rounded mb-3 font-monospace small">
+                        RegNo, Name, Department, Year, Semester, email id
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Select File</label>
+                        <input type="file" name="excel_file" class="form-control" accept=".xlsx,.xls,.csv" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success"><i class="fa-solid fa-upload me-1"></i> Import Now</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllChk = document.getElementById('selectAllChk');
+    const studentChks = document.querySelectorAll('.student-chk');
+
+    if (selectAllChk) {
+        selectAllChk.addEventListener('change', function() {
+            studentChks.forEach(chk => {
+                chk.checked = selectAllChk.checked;
+            });
+        });
+    }
+});
+</script>
+{% endblock %}
